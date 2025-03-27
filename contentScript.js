@@ -8,12 +8,15 @@ if (typeof chrome?.runtime?.getURL === 'function') {
 } else {
   console.warn("❗ chrome.runtime.getURL is not available. Check script context.");
 }
-// ✅ 1. モーダルUIとトグルボタンをページに挿入する関数
-function insertModalAndButton() {
-  console.log("🧠 insertModalAndButton called");
+
+// 全データを保持する変数
+let allPromptData = {};
+
+// ✅ 1. フローティングパネルとトグルボタンをページに挿入する関数
+function insertPanelAndButton() {
+  console.log("🧠 insertPanelAndButton called");
   const targetLabel = document.querySelector('span.switch-btn-label');
 
-  // デバッグ: ターゲット要素のチェック
   console.log("🔍 Target label found:", targetLabel);
   console.log("🔍 Existing button:", document.getElementById('saweb-toggle-modal-btn'));
 
@@ -34,150 +37,250 @@ function insertModalAndButton() {
   targetLabel.parentElement.insertBefore(button, targetLabel);
   console.log("✅ ボタン生成済み");
 
-  // 📦 モーダルHTML
-  const modal = document.createElement('div');
-  modal.id = 'saweb-modal';
-  modal.innerHTML = `
-    <div class="modal-overlay"></div>
-    <div class="modal-content">
-      <div class="modal-header">
-        <span>プロンプト選択</span>
-        <button class="modal-close">✕</button>
-      </div>
-      <div class="modal-body">
-        <label class="saweb-top">
-          <input type="checkbox" id="negativeMode" />
-          ネガティブに追加
-        </label>
-        <select id="fileSelector">
-          <option value="">ファイルを選択</option>
-        </select>
-        <div id="promptContainer"></div>
-      </div>
+  // 📦 フローティングパネルを作成
+  const panelContent = document.createElement('div');
+  panelContent.className = 'saweb-panel-content';
+  panelContent.style.cssText = `
+    position: fixed !important;
+    top: 100px !important;
+    right: 20px !important;
+    width: 400px !important;
+    background: #1e1e1e !important;
+    border: 1px solid #555 !important;
+    border-radius: 8px !important;
+    padding: 16px !important;
+    color: #eee !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+    z-index: 2147483647 !important;
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+    display: none !important;
+  `;
+
+  panelContent.innerHTML = `
+    <div class="panel-header" style="display: flex !important; justify-content: space-between !important; align-items: center !important; font-weight: bold !important; margin-bottom: 12px !important; cursor: move !important;">
+      <span>プロンプト選択</span>
+      <button class="panel-close" style="background: none !important; color: #eee !important; border: none !important; font-size: 18px !important; cursor: pointer !important;">✕</button>
+    </div>
+    <div class="panel-body">
+      <label class="saweb-top" style="display: flex !important; align-items: center !important; margin-bottom: 10px !important; font-size: 14px !important;">
+        <input type="checkbox" id="negativeMode" />
+        ネガティブに追加
+      </label>
+      <select id="fileSelector" style="background-color: #2a2a2a !important; color: #eee !important; border: 1px solid #555 !important; border-radius: 6px !important; padding: 8px 12px !important; font-size: 14px !important; width: 100% !important; margin-bottom: 12px !important; appearance: none !important; outline: none !important;">
+        <option value="">ファイルを選択</option>
+      </select>
+      <div id="promptContainer"></div>
     </div>
   `;
-  document.body.appendChild(modal);
-  console.log("✅ モーダルDOM生成済み");
 
-  // ✅ CSS読み込み
-  const style = document.createElement("link");
-  style.rel = "stylesheet";
-  style.href = chrome.runtime.getURL("content.css");
-  document.head.appendChild(style);
+  document.body.appendChild(panelContent);
+  console.log("✅ パネル生成済み");
 
   // ✅ ドラッグ移動対応
-  enableModalDragging(
-    modal.querySelector('.modal-content'),
-    modal.querySelector('.modal-header')
+  enablePanelDragging(
+    panelContent,
+    panelContent.querySelector('.panel-header')
   );
 
   // ✅ イベント
+  let panelVisible = false;
+
   button.addEventListener('click', (e) => {
     console.log("🧠 ボタンクリックされた！");
-    e.preventDefault(); // デフォルトの動作を防止
-    e.stopPropagation(); // イベントの伝播を停止
-    modal.classList.add('show');
-    console.log("🔍 モーダルクラス:", modal.className);
-    console.log("🔍 モーダル表示スタイル:", window.getComputedStyle(modal).display);
-    // ボタンクリック時に追加
-    const modalElement = document.getElementById('saweb-modal');
-    const modalStyle = window.getComputedStyle(modalElement);
-    console.log("モーダル位置:", {
-      display: modalStyle.display,
-      position: modalStyle.position,
-      top: modalStyle.top,
-      left: modalStyle.left,
-      zIndex: modalStyle.zIndex,
-      width: modalStyle.width,
-      height: modalStyle.height
-    });
+    e.preventDefault();
+    e.stopPropagation();
 
-    const contentElement = modalElement.querySelector('.modal-content');
-    const contentStyle = window.getComputedStyle(contentElement);
-    console.log("モーダルコンテンツ位置:", {
-      position: contentStyle.position,
-      top: contentStyle.top,
-      left: contentStyle.left,
-      transform: contentStyle.transform,
-      width: contentStyle.width
-    });
+    panelVisible = !panelVisible;
+
+    if (panelVisible) {
+      panelContent.style.setProperty('display', 'block', 'important');
+      console.log("🔍 パネル表示");
+    } else {
+      panelContent.style.setProperty('display', 'none', 'important');
+      console.log("🔍 パネル非表示");
+    }
+
+    // デバッグ情報
+    setTimeout(() => {
+      const computedStyle = window.getComputedStyle(panelContent);
+      console.log("パネル計算済みスタイル:", {
+        display: computedStyle.display,
+        position: computedStyle.position,
+        zIndex: computedStyle.zIndex,
+        top: computedStyle.top,
+        right: computedStyle.right,
+        width: computedStyle.width
+      });
+
+      const rect = panelContent.getBoundingClientRect();
+      console.log("画面上の位置:", {
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height
+      });
+    }, 100);
   });
 
-  modal.querySelector('.modal-close').addEventListener('click', () => {
+  panelContent.querySelector('.panel-close').addEventListener('click', () => {
     console.log("❌ 閉じるボタンがクリックされました");
-    modal.classList.remove('show');
-  });
-
-  modal.querySelector('.modal-overlay').addEventListener('click', () => {
-    console.log("❌ オーバーレイがクリックされました");
-    modal.classList.remove('show');
+    panelContent.style.setProperty('display', 'none', 'important');
+    panelVisible = false;
   });
 
   loadPromptData();
 }
 
-// ✅ ドラッグ対応処理
-function enableModalDragging(modal, handle) {
-  let isDragging = false, offsetX = 0, offsetY = 0;
+// ✅ ドラッグ対応処理 - 修正版
+function enablePanelDragging(panel, handle) {
+  let isDragging = false, startX = 0, startY = 0;
+  let startPosX = 0, startPosY = 0;
 
   handle.style.cursor = 'move';
+
   handle.addEventListener('mousedown', (e) => {
     isDragging = true;
-    const rect = modal.getBoundingClientRect();
-    offsetX = e.clientX - rect.left;
-    offsetY = e.clientY - rect.top;
-    modal.style.position = 'fixed';
-    modal.style.margin = '0';
-    console.log("🖱️ ドラッグ開始");
+
+    // ドラッグ開始位置
+    startX = e.clientX;
+    startY = e.clientY;
+
+    // パネルの現在位置を取得
+    const rect = panel.getBoundingClientRect();
+    startPosX = rect.left;
+    startPosY = rect.top;
+
+    console.log("🖱️ ドラッグ開始", { x: startX, y: startY, panelX: startPosX, panelY: startPosY });
+
+    // ドラッグ中はテキスト選択を防止
+    e.preventDefault();
   });
 
   document.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
-    modal.style.left = `${e.clientX - offsetX}px`;
-    modal.style.top = `${e.clientY - offsetY}px`;
+
+    // マウスの移動量を計算
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+
+    // パネル位置を更新
+    panel.style.setProperty('left', `${startPosX + dx}px`, 'important');
+    panel.style.setProperty('top', `${startPosY + dy}px`, 'important');
+    panel.style.setProperty('right', 'auto', 'important');
   });
 
   document.addEventListener('mouseup', () => {
-    isDragging = false;
+    if (isDragging) {
+      console.log("🖱️ ドラッグ終了");
+      isDragging = false;
+    }
   });
 }
 
-// ✅ 2. YAMLロード処理（省略なし）
-let allPromptData = {};
-
+// ✅ 2. YAMLデータ読み込み処理 (popup.jsからの移植)
 function loadPromptData() {
-  chrome.storage.local.get(null, (data) => {
-    allPromptData = data;
+  console.log("📂 loadPromptData関数が呼び出されました");
 
-    const selector = document.getElementById('fileSelector');
-    if (!selector) return;
+  try {
+    chrome.storage.local.get(null, (data) => {
+      console.log("📂 chrome.storage.local.getの結果:", data);
 
-    selector.innerHTML = '<option value="">ファイルを選択</option>';
-    for (const fileName in data) {
-      const option = document.createElement('option');
-      option.value = fileName;
-      option.textContent = fileName;
-      selector.appendChild(option);
-    }
+      // データが空かどうかをチェック
+      if (!data || Object.keys(data).length === 0) {
+        console.warn("⚠️ ストレージにデータがありません");
 
-    const firstFile = Object.keys(data)[0];
-    if (firstFile) {
-      selector.value = firstFile;
-      renderPrompts(firstFile);
-    }
+        // テスト用の初期データ（サンプル）
+        const sampleData = {
+          "サンプルファイル.yaml": {
+            "基本カテゴリ": {
+              "風景": {
+                "森": "beautiful forest, trees, nature",
+                "海": "beautiful ocean, waves, beach"
+              },
+              "スタイル": {
+                "写実的": "photorealistic, detailed",
+                "漫画風": "cartoon style, anime"
+              }
+            },
+            "直接プロンプト": "basic prompt example"
+          }
+        };
 
-    selector.addEventListener('change', (e) => {
-      renderPrompts(e.target.value);
+        // サンプルデータをストレージに保存
+        chrome.storage.local.set(sampleData, () => {
+          console.log("✅ サンプルデータを保存しました");
+          // 再帰的に関数を呼び出してデータを読み込む
+          loadPromptData();
+        });
+
+        return;
+      }
+
+      // データ処理を継続
+      allPromptData = data;
+
+      const selector = document.getElementById('fileSelector');
+      if (!selector) {
+        console.error("❌ fileSelector要素が見つかりません");
+        return;
+      }
+
+      console.log("📂 セレクターに入力するファイル名:", Object.keys(data));
+
+      // セレクターのオプションをクリア
+      selector.innerHTML = '<option value="">ファイルを選択</option>';
+
+      // データをセレクターに追加
+      for (const fileName in data) {
+        const option = document.createElement('option');
+        option.value = fileName;
+        option.textContent = fileName;
+        selector.appendChild(option);
+        console.log(`📂 オプション追加: ${fileName}`);
+      }
+
+      // 最初のファイルを選択
+      const firstFile = Object.keys(data)[0];
+      if (firstFile) {
+        console.log(`📂 最初のファイルを選択: ${firstFile}`);
+        selector.value = firstFile;
+        renderPrompts(firstFile);
+      }
+
+      // セレクター変更イベントのリスナー設定
+      selector.addEventListener('change', (e) => {
+        console.log(`📂 セレクター変更: ${e.target.value}`);
+        renderPrompts(e.target.value);
+      });
     });
-  });
+  } catch (error) {
+    console.error("❌ chrome.storage.localアクセスでエラーが発生しました:", error);
+  }
 }
 
-// ✅ 3. プロンプト描画処理（そのまま）
+// ✅ 3. プロンプト描画処理 (popup.jsからの移植)
 function renderPrompts(fileName) {
+  console.log(`🖌️ renderPrompts called with fileName: ${fileName}`);
+
   const container = document.getElementById('promptContainer');
+  if (!container) {
+    console.error("❌ promptContainer要素が見つかりません");
+    return;
+  }
+
+  // コンテナをクリア
   container.innerHTML = '';
 
-  if (!fileName || !allPromptData[fileName]) return;
+  if (!fileName || !allPromptData[fileName]) {
+    console.warn(`⚠️ ファイル「${fileName}」のデータが見つかりません`);
+    container.innerHTML = '<p style="color:#f88;">選択されたファイルのデータがありません</p>';
+    return;
+  }
+
+  console.log(`🖌️ ファイル「${fileName}」の内容:`, allPromptData[fileName]);
   const fileContent = allPromptData[fileName];
 
   for (const midKey in fileContent) {
@@ -188,6 +291,7 @@ function renderPrompts(fileName) {
       if (!directRow) {
         directRow = document.createElement('div');
         directRow.className = 'button-row button-row-direct';
+        directRow.style.cssText = 'display: flex !important; flex-wrap: wrap !important; gap: 8px !important;';
         container.appendChild(directRow);
       }
       const btn = createPromptButton(midKey, midValue);
@@ -197,13 +301,16 @@ function renderPrompts(fileName) {
     else if (typeof midValue === 'object') {
       const midDiv = document.createElement('div');
       midDiv.className = 'mid-category';
+      midDiv.style.cssText = 'border: 1px solid #555 !important; padding: 14px !important; border-radius: 6px !important; background-color: #1a1a1a !important; display: flex !important; flex-direction: column !important; gap: 10px !important; margin-bottom: 12px !important;';
 
       const midLabel = document.createElement('h4');
       midLabel.textContent = midKey;
+      midLabel.style.cssText = 'background-color: #f90 !important; color: #000 !important; padding: 8px 12px !important; margin: 0 !important; border-radius: 4px !important; font-size: 16px !important;';
       midDiv.appendChild(midLabel);
 
       const midButtonRow = document.createElement('div');
       midButtonRow.className = 'button-row';
+      midButtonRow.style.cssText = 'display: flex !important; flex-wrap: wrap !important; gap: 8px !important;';
 
       for (const subKey in midValue) {
         const subValue = midValue[subKey];
@@ -214,13 +321,16 @@ function renderPrompts(fileName) {
         } else if (typeof subValue === 'object') {
           const subDiv = document.createElement('div');
           subDiv.className = 'sub-category';
+          subDiv.style.cssText = 'border: 1px solid #444 !important; padding: 10px !important; border-radius: 5px !important; background-color: #252525 !important; display: flex !important; flex-direction: column !important; gap: 8px !important;';
 
           const subLabel = document.createElement('h5');
           subLabel.textContent = subKey;
+          subLabel.style.cssText = 'background-color: #fbb040 !important; color: #000 !important; padding: 6px 10px !important; margin: 0 !important; border-radius: 4px !important; font-size: 14px !important;';
           subDiv.appendChild(subLabel);
 
           const buttonRow = document.createElement('div');
           buttonRow.className = 'button-row';
+          buttonRow.style.cssText = 'display: flex !important; flex-wrap: wrap !important; gap: 8px !important;';
 
           for (const label in subValue) {
             const value = subValue[label];
@@ -249,21 +359,31 @@ function createPromptButton(label, value) {
   const button = document.createElement('button');
   button.textContent = label;
   button.className = 'prompt-button';
+  button.style.cssText = 'background-color: #333 !important; color: #eee !important; border: 1px solid #666 !important; padding: 6px 12px !important; border-radius: 4px !important; cursor: pointer !important; font-size: 14px !important; transition: background 0.2s !important; flex-shrink: 0 !important; width: auto !important; align-self: flex-start !important;';
 
   button.addEventListener('click', () => {
+    console.log(`🔘 プロンプトボタンがクリックされました: ${label}`);
     const isNegative = document.getElementById('negativeMode')?.checked;
+    console.log(`🔘 ネガティブモード: ${isNegative}`);
 
     const insertPrompt = (textarea, prompt) => {
-      if (!textarea) return;
+      if (!textarea) {
+        console.error("❌ 対象の入力フィールドが見つかりません");
+        return;
+      }
       const current = textarea.value.trim();
       textarea.value = current ? `${current}, ${prompt}` : prompt;
       textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      console.log(`✅ プロンプトを挿入しました: ${prompt}`);
     };
 
     if (isNegative) {
       const negLabel = Array.from(document.querySelectorAll('label')).find(label =>
         label.textContent.trim() === 'Negative Prompts'
       );
+      if (!negLabel) {
+        console.error("❌ 'Negative Prompts'ラベルが見つかりません");
+      }
       const negTextarea = negLabel?.closest('.h-item')?.querySelector('textarea');
       insertPrompt(negTextarea, value);
     } else {
@@ -279,11 +399,11 @@ function createPromptButton(label, value) {
 console.log("🔄 初期実行を試みます");
 setTimeout(() => {
   console.log("⏱️ 遅延実行開始");
-  insertModalAndButton();
+  insertPanelAndButton();
 }, 1000);
 
 // ✅ 5. DOMが揃ったら自動挿入（MutationObserver）
 const observer = new MutationObserver(() => {
-  insertModalAndButton();
+  insertPanelAndButton();
 });
 observer.observe(document.body, { childList: true, subtree: true });
