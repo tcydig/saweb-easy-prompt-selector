@@ -338,7 +338,6 @@ function renderPrompts(fileName) {
     return;
   }
 
-  // コンテナをクリア
   container.innerHTML = '';
 
   if (!fileName || !allPromptData[fileName]) {
@@ -347,37 +346,34 @@ function renderPrompts(fileName) {
     return;
   }
 
-  console.log(`🖌️ ファイル「${fileName}」の内容:`, allPromptData[fileName]);
   const fileContent = allPromptData[fileName];
 
-  // グリッドコンテナの作成
+  // グリッド全体（中カテゴリ用）
   const gridContainer = document.createElement('div');
   gridContainer.className = 'category-grid';
   gridContainer.style.cssText = `
-  display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(calc(50% - 6px), 1fr)) !important;
-  gap: 12px !important;
-  width: 100% !important;
-`;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(calc(50% - 6px), 1fr)) !important;
+    gap: 12px !important;
+    width: 100% !important;
+  `;
   container.appendChild(gridContainer);
 
-  // 直接プロンプトのコンテナ（グリッド外に配置）
+  // 直接プロンプト用
   let directRow = document.createElement('div');
   directRow.className = 'button-row button-row-direct';
   directRow.style.cssText = 'display: flex !important; flex-wrap: wrap !important; gap: 8px !important; margin-bottom: 12px !important;';
-  container.insertBefore(directRow, gridContainer); // グリッドの前に配置
+  container.insertBefore(directRow, gridContainer);
 
-  // 中カテゴリをグリッドに配置
   for (const midKey in fileContent) {
     const midValue = fileContent[midKey];
 
     if (typeof midValue === 'string') {
-      // 直接プロンプトの場合
+      // 直接プロンプト
       const btn = createPromptButton(midKey, midValue);
       directRow.appendChild(btn);
-    }
-    else if (typeof midValue === 'object') {
-      // 中カテゴリの場合（グリッドアイテムとして配置）
+    } else if (typeof midValue === 'object') {
+      // 中カテゴリ
       const midDiv = document.createElement('div');
       midDiv.className = 'mid-category';
       midDiv.style.cssText = `
@@ -396,9 +392,20 @@ function renderPrompts(fileName) {
       midLabel.style.cssText = 'background-color: #f90 !important; color: #000 !important; padding: 8px 12px !important; margin: 0 !important; border-radius: 4px !important; font-size: 16px !important;';
       midDiv.appendChild(midLabel);
 
+      // 1. 中カテゴリ直下のボタン（string）
       const midButtonRow = document.createElement('div');
       midButtonRow.className = 'button-row';
       midButtonRow.style.cssText = 'display: flex !important; flex-wrap: wrap !important; gap: 8px !important;';
+
+      // 2. 小カテゴリを収集しながら、直下ボタンも処理
+      const subGrid = document.createElement('div');
+      subGrid.style.cssText = `
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+        gap: 10px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+      `;
 
       for (const subKey in midValue) {
         const subValue = midValue[subKey];
@@ -406,69 +413,56 @@ function renderPrompts(fileName) {
         if (typeof subValue === 'string') {
           const btn = createPromptButton(subKey, subValue);
           midButtonRow.appendChild(btn);
-        } else if (typeof subValue === 'object') {
+        }
+
+        if (typeof subValue === 'object') {
           const subDiv = document.createElement('div');
           subDiv.className = 'sub-category';
           subDiv.style.cssText = `
-    border: 1px solid #444 !important; 
-    padding: 10px !important; 
-    border-radius: 5px !important; 
-    background-color: #252525 !important; 
-    display: flex !important; 
-    flex-direction: column !important; 
-    gap: 8px !important; 
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-    margin: 0 !important;
-  `;
+            border: 1px solid #444 !important;
+            padding: 10px !important;
+            border-radius: 5px !important;
+            background-color: #252525 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 8px !important;
+            box-sizing: border-box !important;
+          `;
 
           const subLabel = document.createElement('h5');
           subLabel.textContent = subKey;
           subLabel.style.cssText = `
-    background-color: #fbb040 !important; 
-    color: #000 !important; 
-    padding: 6px 10px !important; 
-    margin: 0 !important; 
-    border-radius: 4px !important; 
-    font-size: 14px !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    box-sizing: border-box !important;
-    width: 100% !important;
-  `;
+            background-color: #fbb040 !important;
+            color: #000 !important;
+            padding: 6px 10px !important;
+            margin: 0 !important;
+            border-radius: 4px !important;
+            font-size: 14px !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+          `;
           subDiv.appendChild(subLabel);
 
           const buttonRow = document.createElement('div');
           buttonRow.className = 'button-row';
           buttonRow.style.cssText = `
-    display: flex !important; 
-    flex-wrap: wrap !important; 
-    gap: 8px !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  `;
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+          `;
 
           for (const label in subValue) {
             const value = subValue[label];
             if (typeof value === 'string') {
               const subBtn = createPromptButton(label, value);
-              // ボタンのサイズ制限を設定
-              subBtn.style.maxWidth = 'calc(100% - 16px) !important';
-              subBtn.style.boxSizing = 'border-box !important';
-              subBtn.style.overflow = 'hidden !important';
-              subBtn.style.textOverflow = 'ellipsis !important';
+              subBtn.style.maxWidth = '100% !important';
               buttonRow.appendChild(subBtn);
             }
           }
 
           subDiv.appendChild(buttonRow);
-          midDiv.appendChild(subDiv);
+          subGrid.appendChild(subDiv);
         }
       }
 
@@ -476,14 +470,17 @@ function renderPrompts(fileName) {
         midDiv.appendChild(midButtonRow);
       }
 
-      // グリッドに追加
+      if (subGrid.childNodes.length > 0) {
+        midDiv.appendChild(subGrid);
+      }
+
       gridContainer.appendChild(midDiv);
     }
   }
 
-  // グリッドサイズのリサイズ監視を追加
   setupGridResizeObserver(gridContainer);
 }
+
 
 // パネルのリサイズに応じてグリッドのカラム数を動的に調整
 function setupGridResizeObserver(gridContainer) {
