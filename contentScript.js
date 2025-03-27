@@ -12,6 +12,23 @@ if (typeof chrome?.runtime?.getURL === 'function') {
 // 全データを保持する変数
 let allPromptData = {};
 
+// Storage情報を同期するためのボタンを追加
+function addSyncButton(panelContent) {
+  const syncButton = document.createElement('button');
+  syncButton.textContent = 'Sync';
+  syncButton.style.cssText = 'background-color: #4caf50 !important; color: #fff !important; border: none !important; padding: 6px 12px !important; border-radius: 4px !important; cursor: pointer !important; font-size: 14px !important; margin-left: 8px !important;';
+
+  syncButton.addEventListener('click', () => {
+    console.log("🔄 Syncボタンがクリックされました。");
+    loadPromptData(); // Storageを再読み込みしてUIを更新
+  });
+
+  const panelHeader = panelContent.querySelector('.panel-header');
+  const titleDiv = panelHeader.querySelector('.panel-title');
+  const titleSpan = titleDiv.querySelector('span');
+  titleSpan.insertAdjacentElement('afterend', syncButton);
+}
+
 // ✅ 1. フローティングパネルとトグルボタンをページに挿入する関数
 function insertPanelAndButton() {
   console.log("🧠 insertPanelAndButton called");
@@ -63,7 +80,10 @@ function insertPanelAndButton() {
 
   panelContent.innerHTML = `
     <div class="panel-header" style="display: flex !important; justify-content: space-between !important; align-items: center !important; font-weight: bold !important; margin-bottom: 12px !important; cursor: move !important;">
-      <span>Select Prompt</span>
+      <div class="panel-title">
+        <span>Select Prompt</span>
+
+      </div>
       <button class="panel-close" style="background: none !important; color: #eee !important; border: none !important; font-size: 18px !important; cursor: pointer !important;">✕</button>
     </div>
     <div class="panel-body">
@@ -81,6 +101,9 @@ function insertPanelAndButton() {
 
   document.body.appendChild(panelContent);
   console.log("✅ パネル生成済み");
+
+    // Storage同期ボタンを追加
+    addSyncButton(panelContent);
 
   // ✅ ドラッグ移動対応
   enablePanelDragging(
