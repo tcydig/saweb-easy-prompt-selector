@@ -1,11 +1,123 @@
-.prompt-button {
-  margin: 4px;
+body {
+  width: 500px;
+  height: 700px;
+  overflow-y: auto;
+  background-color: #1e1e1e;
+  color: #eee;
+  font-family: sans-serif;
+  padding: 16px;
+  margin: 0;
+}
+
+/* YAMLファイルごとの枠 */
+.category-wrapper {
+  border: 1px solid #444;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  background-color: #2c2c2c;
+}
+
+/* 折りたたみヘッダー */
+.category-header {
+  background-color: #333;
+  color: #fff;
+  padding: 12px 16px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #444;
+}
+
+.toggle-icon {
+  font-size: 0.9em;
+}
+
+/* 折りたたみ内容 */
+.category-content {
+  padding: 16px;
+  display: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.category-wrapper.open .category-content {
+  display: flex;
+}
+
+/* 中カテゴリ */
+.mid-category {
+  border: 1px solid #555;
+  padding: 14px;
+  border-radius: 6px;
+  background-color: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mid-category h4 {
+  background-color: #f90;
+  color: #000;
+  padding: 8px 12px;
+  margin: 0;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+/* 小カテゴリ */
+.sub-category {
+  border: 1px solid #444;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: #252525;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sub-category h5 {
+  background-color: #fbb040;
+  color: #000;
   padding: 6px 10px;
-  border: 1px solid #aaa;
+  margin: 0;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+/* ボタン群 */
+.button-row,
+.button-row-direct {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+
+/* ボタン */
+.prompt-button {
+  background-color: #333;
+  color: #eee;
+  border: 1px solid #666;
+  padding: 6px 12px;
   border-radius: 4px;
   cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  width: auto;              /* ← 横幅は文字サイズ基準に */
+  align-self: flex-start;   /* ← column配置でも左寄せ＆縮まる */
 }
-.prompt-button.selected {
-  background-color: #007bff;
-  color: white;
+
+
+.prompt-button:hover {
+  background-color: #555;
+}
+
+/* チェックボックスのラベル調整 */
+input[type="checkbox"] {
+  margin-right: 6px;
 }

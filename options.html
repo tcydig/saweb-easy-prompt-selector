@@ -4,11 +4,34 @@
   <meta charset="UTF-8">
   <title>SAWeb Easy Prompt Selector - 設定</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 1.5em;
+      margin-bottom: 10px;
+    }
+    input[type="file"] {
+      margin-bottom: 20px;
+    }
+    ul {
+      padding-left: 0;
+      list-style: none;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    button {
+      margin-left: 10px;
+    }
+  </style>
 </head>
 <body>
   <h1>YAMLアップロード</h1>
-  <input type="file" id="yamlInput" accept=".yaml" />
-  <p id="status"></p>
+  <input type="file" id="yamlUploader" multiple accept=".yaml,.yml" />
+  <ul id="fileList"></ul>
   <script src="lib/js-yaml.min.js"></script>
   <script src="options.js"></script>
 </body>

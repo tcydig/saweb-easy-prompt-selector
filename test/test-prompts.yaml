@@ -1,12 +1,17 @@
-Posture:
-  Stand: standing
-  Sit: sitting
-  Squat: squatting
+ポーズ:
+  立つ: standing
+  座る: sitting
+  動き:
+    ジャンプ: jumping
+    走る: running
 
-Style:
-  Anime: anime style
-  Realistic: ultra-realistic
+スタイル:
+  リアル: realistic
+  アニメ風: anime-style
 
-Subject:
-  Cat: cute cat
-  City: futuristic city
+感情:
+  喜び: joy
+  悲しみ: sadness
+  強い感情:
+    怒り: anger
+    驚き: surprise
