@@ -1,35 +1,3 @@
-let positivePrompts = [];
-let negativePrompts = [];
-
-function createButton(label, value) {
-  const button = document.createElement('button');
-  button.textContent = label;
-  button.className = 'prompt-button';
-
-  button.addEventListener('click', () => {
-    const isNegative = document.getElementById('negativeMode').checked;
-    const list = isNegative ? negativePrompts : positivePrompts;
-    const index = list.indexOf(value);
-
-    if (index === -1) {
-      list.push(value);
-      button.classList.add('selected');
-    } else {
-      list.splice(index, 1);
-      button.classList.remove('selected');
-    }
-
-    updateDisplay();
-  });
-
-  return button;
-}
-
-function updateDisplay() {
-  document.getElementById('positiveOutput').textContent = positivePrompts.join(', ');
-  document.getElementById('negativeOutput').textContent = negativePrompts.join(', ');
-}
-
 chrome.storage.local.get('prompts', (data) => {
   const prompts = data.prompts || {};
   const container = document.getElementById('promptContainer');
@@ -45,7 +13,7 @@ chrome.storage.local.get('prompts', (data) => {
     const items = prompts[categoryName];
     for (const label in items) {
       const value = items[label];
-      const button = createButton(label, value);
+      const button = createPromptButton(label, value);
       categoryDiv.appendChild(button);
     }
 
@@ -53,24 +21,41 @@ chrome.storage.local.get('prompts', (data) => {
   }
 });
 
-document.getElementById('insertButton').addEventListener('click', async () => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    func: (positive, negative) => {
-      const posInput = document.querySelector('#generateInput');
-      const negInput = document.querySelector('textarea.el-textarea__inner:not([id])');
+function createPromptButton(label, value) {
+  const button = document.createElement('button');
+  button.textContent = label;
+  button.className = 'prompt-button';
 
-      if (posInput) {
-        posInput.value = positive;
-        posInput.dispatchEvent(new Event('input', { bubbles: true }));
-      }
+  button.addEventListener('click', async () => {
+    const isNegative = document.getElementById('negativeMode').checked;
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-      if (negInput) {
-        negInput.value = negative;
-        negInput.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-    },
-    args: [positivePrompts.join(', '), negativePrompts.join(', ')]
+    chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: (prompt, isNeg) => {
+        const insertPrompt = (textarea, prompt) => {
+          if (!textarea) return;
+          const current = textarea.value.trim();
+          textarea.value = current ? `${current}, ${prompt}` : prompt;
+          textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+    
+        if (isNeg) {
+          // ネガティブラベルを見つけて、その中のtextareaに追加
+          const negLabel = Array.from(document.querySelectorAll('label')).find(label =>
+            label.textContent.trim() === 'Negative Prompts'
+          );
+          const negTextarea = negLabel?.closest('.h-item')?.querySelector('textarea');
+          insertPrompt(negTextarea, prompt);
+        } else {
+          // ポジティブ欄はIDでOK
+          const posInput = document.querySelector('#generateInput');
+          insertPrompt(posInput, prompt);
+        }
+      },
+      args: [value, isNegative]
+    });    
   });
-});
+
+  return button;
+}
