@@ -1,0 +1,17 @@
+自然風景プロンプト:
+  季節:
+    春: "beautiful spring landscape, blooming flowers, vibrant colors"
+    夏: "sunny summer beach, clear sky, bright sunlight"
+    秋: "autumn leaves falling, warm tones, cozy atmosphere"
+    冬: "snow-covered forest, serene and quiet, icy details"
+
+  時間帯:
+    朝: "soft morning light, sunrise, misty"
+    昼: "bright daylight, vivid colors, energetic mood"
+    夕方: "romantic sunset, warm glow, dramatic sky"
+    夜: "peaceful night sky, stars, moonlight"
+  星座: "constellation"
+明るさ:
+  暗さ: "darkness"
+
+直接プロンプト: "epic natural scenery, breathtaking view, cinematic"
