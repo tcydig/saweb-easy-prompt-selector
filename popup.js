@@ -1,98 +1,116 @@
+
+// 全データを一度だけ取得しておく
+let allPromptData = {};
+
 chrome.storage.local.get(null, (data) => {
+  allPromptData = data;
+
+  const selector = document.getElementById('fileSelector');
+  selector.innerHTML = '<option value="">ファイルを選択</option>';
+
+  for (const fileName in data) {
+    const option = document.createElement('option');
+    option.value = fileName;
+    option.textContent = fileName;
+    selector.appendChild(option);
+  }
+
+  // 初期表示：最初のファイルがあればそれを選択
+  const firstFile = Object.keys(data)[0];
+  if (firstFile) {
+    selector.value = firstFile;
+    renderPrompts(firstFile);
+  }
+
+  // イベント：選択されたら描画
+  selector.addEventListener('change', (e) => {
+    const selectedFile = e.target.value;
+    renderPrompts(selectedFile);
+  });
+});
+
+function renderPrompts(fileName) {
   const container = document.getElementById('promptContainer');
   container.innerHTML = '';
 
-  for (const fileName in data) {
-    const fileContent = data[fileName];
+  if (!fileName || !allPromptData[fileName]) return;
 
-    const wrapper = document.createElement('div');
-    wrapper.className = 'category-wrapper';
+  const fileContent = allPromptData[fileName];
 
-    const header = document.createElement('div');
-    header.className = 'category-header';
-    header.innerHTML = `<span>${fileName}</span><span class="toggle-icon">▼</span>`;
+  const wrapper = document.createElement('div');
+  wrapper.className = 'category-wrapper';
 
-    const content = document.createElement('div');
-    content.className = 'category-content';
+  const content = document.createElement('div');
+  content.className = 'category-content open';
 
-    header.addEventListener('click', () => {
-      wrapper.classList.toggle('open');
-    });
+  for (const midKey in fileContent) {
+    const midValue = fileContent[midKey];
 
-    for (const midKey in fileContent) {
-      const midValue = fileContent[midKey];
-
-      // ✅ 中カテゴリ直下のボタン（例: アニメ風、リアル）
-      if (typeof midValue === 'string') {
-        let directRow = content.querySelector('.button-row-direct');
-        if (!directRow) {
-          directRow = document.createElement('div');
-          directRow.className = 'button-row button-row-direct';
-          content.appendChild(directRow);
-        }
-        const btn = createPromptButton(midKey, midValue);
-        directRow.appendChild(btn);
+    if (typeof midValue === 'string') {
+      let directRow = content.querySelector('.button-row-direct');
+      if (!directRow) {
+        directRow = document.createElement('div');
+        directRow.className = 'button-row button-row-direct';
+        content.appendChild(directRow);
       }
-
-      // ✅ 中カテゴリ（Object）→ 見出し＋中 or 小カテゴリ処理
-      else if (typeof midValue === 'object') {
-        const midDiv = document.createElement('div');
-        midDiv.className = 'mid-category';
-
-        const midLabel = document.createElement('h4');
-        midLabel.textContent = midKey;
-        midDiv.appendChild(midLabel);
-
-        // ✅ 中カテゴリ直下のボタンをまとめる
-        const midButtonRow = document.createElement('div');
-        midButtonRow.className = 'button-row';
-
-        for (const subKey in midValue) {
-          const subValue = midValue[subKey];
-
-          if (typeof subValue === 'string') {
-            const btn = createPromptButton(subKey, subValue);
-            midButtonRow.appendChild(btn);
-          }
-
-          // ✅ 小カテゴリ（Object）
-          else if (typeof subValue === 'object') {
-            const subDiv = document.createElement('div');
-            subDiv.className = 'sub-category';
-
-            const subLabel = document.createElement('h5');
-            subLabel.textContent = subKey;
-            subDiv.appendChild(subLabel);
-
-            const buttonRow = document.createElement('div');
-            buttonRow.className = 'button-row';
-
-            for (const label in subValue) {
-              const value = subValue[label];
-              if (typeof value === 'string') {
-                const subBtn = createPromptButton(label, value);
-                buttonRow.appendChild(subBtn);
-              }
-            }
-
-            subDiv.appendChild(buttonRow);
-            midDiv.appendChild(subDiv);
-          }
-        }
-
-        if (midButtonRow.childNodes.length > 0) {
-          midDiv.appendChild(midButtonRow); // ← ボタンがあれば midDiv に追加
-        }
-
-        content.appendChild(midDiv);
-      }
+      const btn = createPromptButton(midKey, midValue);
+      directRow.appendChild(btn);
     }
 
-    wrapper.appendChild(header);
-    wrapper.appendChild(content);
-    container.appendChild(wrapper);
+    else if (typeof midValue === 'object') {
+      const midDiv = document.createElement('div');
+      midDiv.className = 'mid-category';
+
+      const midLabel = document.createElement('h4');
+      midLabel.textContent = midKey;
+      midDiv.appendChild(midLabel);
+
+      const midButtonRow = document.createElement('div');
+      midButtonRow.className = 'button-row';
+
+      for (const subKey in midValue) {
+        const subValue = midValue[subKey];
+
+        if (typeof subValue === 'string') {
+          const btn = createPromptButton(subKey, subValue);
+          midButtonRow.appendChild(btn);
+        }
+
+        else if (typeof subValue === 'object') {
+          const subDiv = document.createElement('div');
+          subDiv.className = 'sub-category';
+
+          const subLabel = document.createElement('h5');
+          subLabel.textContent = subKey;
+          subDiv.appendChild(subLabel);
+
+          const buttonRow = document.createElement('div');
+          buttonRow.className = 'button-row';
+
+          for (const label in subValue) {
+            const value = subValue[label];
+            if (typeof value === 'string') {
+              const subBtn = createPromptButton(label, value);
+              buttonRow.appendChild(subBtn);
+            }
+          }
+
+          subDiv.appendChild(buttonRow);
+          midDiv.appendChild(subDiv);
+        }
+      }
+
+      if (midButtonRow.childNodes.length > 0) {
+        midDiv.appendChild(midButtonRow);
+      }
+
+      content.appendChild(midDiv);
+    }
   }
-});
+
+  wrapper.appendChild(content);
+  container.appendChild(wrapper);
+}
 
 function createPromptButton(label, value) {
   const button = document.createElement('button');

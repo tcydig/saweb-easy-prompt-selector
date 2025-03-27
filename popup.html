@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="UTF-8">
   <title>SAWeb Easy Prompt Selector</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <h1>Prompt Buttons</h1>
 
@@ -12,8 +14,15 @@
     <input type="checkbox" id="negativeMode" />
     ネガティブに追加
   </label>
+  <!-- ✅ 追加：ファイル選択用プルダウン -->
+  <div style="margin: 10px 0;">
+    <select id="fileSelector" style="width: 100%; padding: 6px;">
+      <option value="">ファイルを選択</option>
+    </select>
+  </div>
 
   <div id="promptContainer"></div>
   <script src="popup.js" defer></script>
 </body>
-</html> 
+
+</html>

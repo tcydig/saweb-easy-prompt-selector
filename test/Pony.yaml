@@ -1,0 +1,15 @@
+ポーズ:
+  立つ: standing
+  座る: sitting
+  動き:
+    ジャンプ: jumping
+    走る: running
+
+スタイル:
+  リアル: realistic
+  アニメ風: anime-style
+
+感情:
+  強い感情:
+    怒り: anger
+    驚き: surprise

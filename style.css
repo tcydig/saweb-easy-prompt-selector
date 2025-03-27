@@ -108,8 +108,10 @@ body {
   font-size: 14px;
   transition: background 0.2s;
   flex-shrink: 0;
-  width: auto;              /* ← 横幅は文字サイズ基準に */
-  align-self: flex-start;   /* ← column配置でも左寄せ＆縮まる */
+  width: auto;
+  /* ← 横幅は文字サイズ基準に */
+  align-self: flex-start;
+  /* ← column配置でも左寄せ＆縮まる */
 }
 
 
@@ -120,4 +122,26 @@ body {
 /* チェックボックスのラベル調整 */
 input[type="checkbox"] {
   margin-right: 6px;
+}
+
+#fileSelector {
+  background-color: #2a2a2a;
+  color: #eee;
+  border: 1px solid #555;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+  appearance: none;
+  outline: none;
+}
+
+#fileSelector:hover {
+  background-color: #333;
+  border-color: #777;
+}
+
+#fileSelector:focus {
+  border-color: #f90;
 }
