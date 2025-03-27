@@ -1,22 +1,27 @@
 let positivePrompts = [];
 let negativePrompts = [];
 
-function createButton(text, category, type) {
+function createButton(label, value) {
   const button = document.createElement('button');
-  button.textContent = text;
+  button.textContent = label;
   button.className = 'prompt-button';
+
   button.addEventListener('click', () => {
-    const list = type === 'positive' ? positivePrompts : negativePrompts;
-    const index = list.indexOf(text);
+    const isNegative = document.getElementById('negativeMode').checked;
+    const list = isNegative ? negativePrompts : positivePrompts;
+    const index = list.indexOf(value);
+
     if (index === -1) {
-      list.push(text);
+      list.push(value);
       button.classList.add('selected');
     } else {
       list.splice(index, 1);
       button.classList.remove('selected');
     }
+
     updateDisplay();
   });
+
   return button;
 }
 
@@ -29,35 +34,23 @@ chrome.storage.local.get('prompts', (data) => {
   const prompts = data.prompts || {};
   const container = document.getElementById('promptContainer');
 
-  ['positive', 'negative'].forEach(type => {
-    const section = document.createElement('div');
-    section.className = 'prompt-section';
+  for (const categoryName in prompts) {
+    const categoryDiv = document.createElement('div');
+    categoryDiv.className = 'category';
 
-    const header = document.createElement('h2');
-    header.textContent = `${type.charAt(0).toUpperCase() + type.slice(1)} Prompts`;
-    section.appendChild(header);
+    const catLabel = document.createElement('h4');
+    catLabel.textContent = categoryName;
+    categoryDiv.appendChild(catLabel);
 
-    const categories = prompts[type];
-    if (categories) {
-      for (const categoryName in categories) {
-        const categoryDiv = document.createElement('div');
-        categoryDiv.className = 'category';
-
-        const catLabel = document.createElement('h4');
-        catLabel.textContent = categoryName;
-        categoryDiv.appendChild(catLabel);
-
-        categories[categoryName].forEach(prompt => {
-          const button = createButton(prompt, categoryName, type);
-          categoryDiv.appendChild(button);
-        });
-
-        section.appendChild(categoryDiv);
-      }
+    const items = prompts[categoryName];
+    for (const label in items) {
+      const value = items[label];
+      const button = createButton(label, value);
+      categoryDiv.appendChild(button);
     }
 
-    container.appendChild(section);
-  });
+    container.appendChild(categoryDiv);
+  }
 });
 
 document.getElementById('insertButton').addEventListener('click', async () => {
@@ -65,16 +58,18 @@ document.getElementById('insertButton').addEventListener('click', async () => {
   chrome.scripting.executeScript({
     target: { tabId: tab.id },
     func: (positive, negative) => {
-      const insert = (selector, value) => {
-        const input = document.querySelector(selector);
-        if (input) {
-          input.value = value;
-          input.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-      };
+      const posInput = document.querySelector('#generateInput');
+      const negInput = document.querySelector('textarea.el-textarea__inner:not([id])');
 
-      insert('#positivePrompt', positive); // ← 適宜SeaArtの正しいセレクタに変更
-      insert('#negativePrompt', negative);
+      if (posInput) {
+        posInput.value = positive;
+        posInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      if (negInput) {
+        negInput.value = negative;
+        negInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
     },
     args: [positivePrompts.join(', '), negativePrompts.join(', ')]
   });

@@ -1,0 +1,12 @@
+Posture:
+  Stand: standing
+  Sit: sitting
+  Squat: squatting
+
+Style:
+  Anime: anime style
+  Realistic: ultra-realistic
+
+Subject:
+  Cat: cute cat
+  City: futuristic city
