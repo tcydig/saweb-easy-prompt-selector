@@ -3,11 +3,19 @@
   "name": "SAWeb Easy Prompt Selector",
   "version": "1.0",
   "description": "プロンプトを簡単に選択できるChrome拡張機能",
-  "permissions": [
-    "storage"
-  ],
+  "permissions": ["storage", "scripting", "activeTab"],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+        "16": "icon.png"
+    }
   },
-  "options_page": "options.html"
+  "options_page": "options.html",
+  "content_scripts": [
+    {
+      "matches": ["https://www.seaart.ai/"],
+      "js": ["contentScript.js"],
+      "run_at": "document_idle"
+    }
+  ]
 } 
