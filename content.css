@@ -13,7 +13,29 @@
   font-family: sans-serif;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
 }
+#saweb-toggle-modal-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: #2D3441 !important; /* Postのアイコン色を元にピンクに寄せて */
+  color: #fff !important;
+  border: none !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
 
+#saweb-toggle-modal-btn:hover {
+  background-color: #252a35 !important;
+}
+
+#saweb-toggle-modal-btn:active {
+  transform: scale(0.96) !important;
+}
 /* 🔹 チェックボックス + セレクター */
 .saweb-top {
   display: flex;

@@ -39,7 +39,7 @@ async function renderList() {
     const li = document.createElement("li");
     li.textContent = key;
     const btn = document.createElement("button");
-    btn.textContent = "削除";
+    btn.textContent = "Delete";
     btn.onclick = async () => {
       await chrome.storage.local.remove(key);
       renderList();

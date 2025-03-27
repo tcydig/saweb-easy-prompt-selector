@@ -29,7 +29,7 @@ function insertPanelAndButton() {
   const button = document.createElement('button');
   button.textContent = '🧠';
   button.id = 'saweb-toggle-modal-btn';
-  button.title = 'プロンプトを開く';
+  button.title = 'Open prompt';
   button.style.marginRight = '8px';
   button.style.padding = '4px 8px';
   button.style.fontSize = '14px';
@@ -63,16 +63,16 @@ function insertPanelAndButton() {
 
   panelContent.innerHTML = `
     <div class="panel-header" style="display: flex !important; justify-content: space-between !important; align-items: center !important; font-weight: bold !important; margin-bottom: 12px !important; cursor: move !important;">
-      <span>プロンプト選択</span>
+      <span>Select Prompt</span>
       <button class="panel-close" style="background: none !important; color: #eee !important; border: none !important; font-size: 18px !important; cursor: pointer !important;">✕</button>
     </div>
     <div class="panel-body">
       <label class="saweb-top" style="display: flex !important; align-items: center !important; margin-bottom: 10px !important; font-size: 14px !important;">
         <input type="checkbox" id="negativeMode" />
-        ネガティブに追加
+        Add to Negative
       </label>
       <select id="fileSelector" style="background-color: #2a2a2a !important; color: #eee !important; border: 1px solid #555 !important; border-radius: 6px !important; padding: 8px 12px !important; font-size: 14px !important; width: 100% !important; margin-bottom: 12px !important; appearance: none !important; outline: none !important;">
-        <option value="">ファイルを選択</option>
+        <option value="">Select a file</option>
       </select>
       <div id="promptContainer"></div>
     </div>
@@ -298,7 +298,7 @@ function loadPromptData() {
       console.log("📂 セレクターに入力するファイル名:", Object.keys(data));
 
       // セレクターのオプションをクリア
-      selector.innerHTML = '<option value="">ファイルを選択</option>';
+      selector.innerHTML = '<option value="">Select a file</option>';
 
       // データをセレクターに追加
       for (const fileName in data) {
@@ -581,7 +581,7 @@ function insertFixedButton() {
   const fixedButton = document.createElement('button');
   fixedButton.textContent = '🧠';
   fixedButton.id = 'saweb-toggle-modal-btn';
-  fixedButton.title = 'プロンプトを開く';
+  fixedButton.title = 'Open prompt';
   fixedButton.style.cssText = `
     position: fixed !important;
     top: 10px !important;
