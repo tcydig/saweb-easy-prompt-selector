@@ -354,11 +354,11 @@ function renderPrompts(fileName) {
   const gridContainer = document.createElement('div');
   gridContainer.className = 'category-grid';
   gridContainer.style.cssText = `
-    display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
-    gap: 12px !important;
-    width: 100% !important;
-  `;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(calc(50% - 6px), 1fr)) !important;
+  gap: 12px !important;
+  width: 100% !important;
+`;
   container.appendChild(gridContainer);
 
   // 直接プロンプトのコンテナ（グリッド外に配置）
@@ -409,21 +409,60 @@ function renderPrompts(fileName) {
         } else if (typeof subValue === 'object') {
           const subDiv = document.createElement('div');
           subDiv.className = 'sub-category';
-          subDiv.style.cssText = 'border: 1px solid #444 !important; padding: 10px !important; border-radius: 5px !important; background-color: #252525 !important; display: flex !important; flex-direction: column !important; gap: 8px !important; width: 100% !important;';
+          subDiv.style.cssText = `
+    border: 1px solid #444 !important; 
+    padding: 10px !important; 
+    border-radius: 5px !important; 
+    background-color: #252525 !important; 
+    display: flex !important; 
+    flex-direction: column !important; 
+    gap: 8px !important; 
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+  `;
 
           const subLabel = document.createElement('h5');
           subLabel.textContent = subKey;
-          subLabel.style.cssText = 'background-color: #fbb040 !important; color: #000 !important; padding: 6px 10px !important; margin: 0 !important; border-radius: 4px !important; font-size: 14px !important;';
+          subLabel.style.cssText = `
+    background-color: #fbb040 !important; 
+    color: #000 !important; 
+    padding: 6px 10px !important; 
+    margin: 0 !important; 
+    border-radius: 4px !important; 
+    font-size: 14px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+  `;
           subDiv.appendChild(subLabel);
 
           const buttonRow = document.createElement('div');
           buttonRow.className = 'button-row';
-          buttonRow.style.cssText = 'display: flex !important; flex-wrap: wrap !important; gap: 8px !important;';
+          buttonRow.style.cssText = `
+    display: flex !important; 
+    flex-wrap: wrap !important; 
+    gap: 8px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  `;
 
           for (const label in subValue) {
             const value = subValue[label];
             if (typeof value === 'string') {
               const subBtn = createPromptButton(label, value);
+              // ボタンのサイズ制限を設定
+              subBtn.style.maxWidth = 'calc(100% - 16px) !important';
+              subBtn.style.boxSizing = 'border-box !important';
+              subBtn.style.overflow = 'hidden !important';
+              subBtn.style.textOverflow = 'ellipsis !important';
               buttonRow.appendChild(subBtn);
             }
           }
@@ -456,14 +495,10 @@ function setupGridResizeObserver(gridContainer) {
         console.log("📏 グリッドの幅が変更されました:", width);
 
         // 親要素の幅に応じてグリッドのカラム数を調整
-        let columns = 1; // デフォルト：極小
+        let columns = 1; // 幅が狭い場合は1列
 
-        if (width > 700) {
-          columns = 4; // 大
-        } else if (width > 500) {
-          columns = 3; // 中
-        } else if (width > 300) {
-          columns = 2; // 小
+        if (width > 450) {
+          columns = 2; // 幅が十分ある場合は2列（最大）
         }
 
         // グリッドのカラム設定を更新
@@ -476,6 +511,14 @@ function setupGridResizeObserver(gridContainer) {
     observer.observe(gridContainer.parentElement);
   } else {
     console.warn("⚠️ ResizeObserverが利用できません。固定レイアウトを使用します。");
+
+    // フォールバック: 固定で2列または1列にする
+    const parentWidth = gridContainer.parentElement.offsetWidth;
+    let columns = 1;
+    if (parentWidth > 450) {
+      columns = 2;
+    }
+    gridContainer.style.setProperty('grid-template-columns', `repeat(${columns}, 1fr)`, 'important');
   }
 }
 

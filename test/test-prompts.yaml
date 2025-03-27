@@ -4,6 +4,9 @@
   動き:
     ジャンプ: jumping
     走る: running
+  v動き:
+    ジャンプ: jumping
+    走る: running
 
 スタイル:
   リアル: realistic
