@@ -55,6 +55,10 @@ function insertPanelAndButton() {
     max-height: 80vh !important;
     overflow-y: auto !important;
     display: none !important;
+    resize: both !important;
+    overflow: auto !important;
+    min-width: 300px !important;
+    min-height: 200px !important;
   `;
 
   panelContent.innerHTML = `
@@ -72,6 +76,7 @@ function insertPanelAndButton() {
       </select>
       <div id="promptContainer"></div>
     </div>
+    <div class="resize-handle" style="position: absolute !important; bottom: 0 !important; right: 0 !important; width: 20px !important; height: 20px !important; cursor: nwse-resize !important; background: linear-gradient(135deg, transparent 50%, #666 50%, #999 75%, #ccc 100%) !important; border-bottom-right-radius: 8px !important;"></div>
   `;
 
   document.body.appendChild(panelContent);
@@ -81,6 +86,12 @@ function insertPanelAndButton() {
   enablePanelDragging(
     panelContent,
     panelContent.querySelector('.panel-header')
+  );
+
+  // ✅ リサイズ機能
+  enablePanelResizing(
+    panelContent,
+    panelContent.querySelector('.resize-handle')
   );
 
   // ✅ イベント
@@ -134,7 +145,7 @@ function insertPanelAndButton() {
   loadPromptData();
 }
 
-// ✅ ドラッグ対応処理 - 修正版
+// ✅ ドラッグ対応処理
 function enablePanelDragging(panel, handle) {
   let isDragging = false, startX = 0, startY = 0;
   let startPosX = 0, startPosY = 0;
@@ -180,7 +191,63 @@ function enablePanelDragging(panel, handle) {
   });
 }
 
-// ✅ 2. YAMLデータ読み込み処理 (popup.jsからの移植)
+// ✅ リサイズ機能
+function enablePanelResizing(panel, handle) {
+  let isResizing = false;
+  let startX, startY, startWidth, startHeight;
+
+  handle.addEventListener('mousedown', (e) => {
+    // リサイズの開始
+    isResizing = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    startWidth = parseInt(document.defaultView.getComputedStyle(panel).width, 10);
+    startHeight = parseInt(document.defaultView.getComputedStyle(panel).height, 10);
+
+    console.log("🔄 リサイズ開始", {
+      startX,
+      startY,
+      startWidth,
+      startHeight
+    });
+
+    e.preventDefault();
+    e.stopPropagation();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isResizing) return;
+
+    // 新しいサイズを計算
+    const newWidth = startWidth + (e.clientX - startX);
+    const newHeight = startHeight + (e.clientY - startY);
+
+    // 最小サイズを制限
+    const minWidth = 300;
+    const minHeight = 200;
+
+    // 新しいサイズを適用
+    if (newWidth > minWidth) {
+      panel.style.setProperty('width', `${newWidth}px`, 'important');
+    }
+
+    if (newHeight > minHeight) {
+      panel.style.setProperty('height', `${newHeight}px`, 'important');
+    }
+
+    // リサイズ中は自動スクロールを防止
+    e.preventDefault();
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (isResizing) {
+      console.log("🔄 リサイズ終了");
+      isResizing = false;
+    }
+  });
+}
+
+// ✅ 2. YAMLデータ読み込み処理
 function loadPromptData() {
   console.log("📂 loadPromptData関数が呼び出されました");
 
@@ -261,7 +328,7 @@ function loadPromptData() {
   }
 }
 
-// ✅ 3. プロンプト描画処理 (popup.jsからの移植)
+// ✅ 3. プロンプト描画処理
 function renderPrompts(fileName) {
   console.log(`🖌️ renderPrompts called with fileName: ${fileName}`);
 
@@ -360,6 +427,14 @@ function createPromptButton(label, value) {
   button.textContent = label;
   button.className = 'prompt-button';
   button.style.cssText = 'background-color: #333 !important; color: #eee !important; border: 1px solid #666 !important; padding: 6px 12px !important; border-radius: 4px !important; cursor: pointer !important; font-size: 14px !important; transition: background 0.2s !important; flex-shrink: 0 !important; width: auto !important; align-self: flex-start !important;';
+
+  button.addEventListener('mouseover', () => {
+    button.style.backgroundColor = '#555 !important';
+  });
+
+  button.addEventListener('mouseout', () => {
+    button.style.backgroundColor = '#333 !important';
+  });
 
   button.addEventListener('click', () => {
     console.log(`🔘 プロンプトボタンがクリックされました: ${label}`);
