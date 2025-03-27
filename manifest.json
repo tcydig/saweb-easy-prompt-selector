@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "SAWeb Easy Prompt Selector",
+  "version": "1.0",
+  "description": "プロンプトを簡単に選択できるChrome拡張機能",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "options_page": "options.html"
+} 
