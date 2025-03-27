@@ -1,10 +1,10 @@
-
 console.log("🚀 contentScript loaded");
 if (typeof chrome?.runtime?.getURL === 'function') {
   const style = document.createElement("link");
   style.rel = "stylesheet";
   style.href = chrome.runtime.getURL("content.css");
   document.head.appendChild(style);
+  console.log("✅ スタイルシート読み込み完了");
 } else {
   console.warn("❗ chrome.runtime.getURL is not available. Check script context.");
 }
@@ -12,7 +12,15 @@ if (typeof chrome?.runtime?.getURL === 'function') {
 function insertModalAndButton() {
   console.log("🧠 insertModalAndButton called");
   const targetLabel = document.querySelector('span.switch-btn-label');
-  if (!targetLabel || document.getElementById('saweb-toggle-modal-btn')) return;
+
+  // デバッグ: ターゲット要素のチェック
+  console.log("🔍 Target label found:", targetLabel);
+  console.log("🔍 Existing button:", document.getElementById('saweb-toggle-modal-btn'));
+
+  if (!targetLabel || document.getElementById('saweb-toggle-modal-btn')) {
+    console.log("⚠️ Target not found or button already exists. Exiting.");
+    return;
+  }
 
   // 🔘 トグルボタン
   const button = document.createElement('button');
@@ -24,6 +32,7 @@ function insertModalAndButton() {
   button.style.fontSize = '14px';
   button.style.cursor = 'pointer';
   targetLabel.parentElement.insertBefore(button, targetLabel);
+  console.log("✅ ボタン生成済み");
 
   // 📦 モーダルHTML
   const modal = document.createElement('div');
@@ -48,7 +57,7 @@ function insertModalAndButton() {
     </div>
   `;
   document.body.appendChild(modal);
-  console.log("✅ モーダルDOM生成済み")
+  console.log("✅ モーダルDOM生成済み");
 
   // ✅ CSS読み込み
   const style = document.createElement("link");
@@ -63,13 +72,46 @@ function insertModalAndButton() {
   );
 
   // ✅ イベント
-  // button.addEventListener('click', () => modal.classList.add('show'));
-  button.addEventListener('click', () => {
+  button.addEventListener('click', (e) => {
     console.log("🧠 ボタンクリックされた！");
+    e.preventDefault(); // デフォルトの動作を防止
+    e.stopPropagation(); // イベントの伝播を停止
     modal.classList.add('show');
+    console.log("🔍 モーダルクラス:", modal.className);
+    console.log("🔍 モーダル表示スタイル:", window.getComputedStyle(modal).display);
+    // ボタンクリック時に追加
+    const modalElement = document.getElementById('saweb-modal');
+    const modalStyle = window.getComputedStyle(modalElement);
+    console.log("モーダル位置:", {
+      display: modalStyle.display,
+      position: modalStyle.position,
+      top: modalStyle.top,
+      left: modalStyle.left,
+      zIndex: modalStyle.zIndex,
+      width: modalStyle.width,
+      height: modalStyle.height
+    });
+
+    const contentElement = modalElement.querySelector('.modal-content');
+    const contentStyle = window.getComputedStyle(contentElement);
+    console.log("モーダルコンテンツ位置:", {
+      position: contentStyle.position,
+      top: contentStyle.top,
+      left: contentStyle.left,
+      transform: contentStyle.transform,
+      width: contentStyle.width
+    });
   });
-  modal.querySelector('.modal-close').addEventListener('click', () => modal.classList.remove('show'));
-  modal.querySelector('.modal-overlay').addEventListener('click', () => modal.classList.remove('show'));
+
+  modal.querySelector('.modal-close').addEventListener('click', () => {
+    console.log("❌ 閉じるボタンがクリックされました");
+    modal.classList.remove('show');
+  });
+
+  modal.querySelector('.modal-overlay').addEventListener('click', () => {
+    console.log("❌ オーバーレイがクリックされました");
+    modal.classList.remove('show');
+  });
 
   loadPromptData();
 }
@@ -86,6 +128,7 @@ function enableModalDragging(modal, handle) {
     offsetY = e.clientY - rect.top;
     modal.style.position = 'fixed';
     modal.style.margin = '0';
+    console.log("🖱️ ドラッグ開始");
   });
 
   document.addEventListener('mousemove', (e) => {
@@ -231,6 +274,13 @@ function createPromptButton(label, value) {
 
   return button;
 }
+
+// 重要: 初期実行を追加
+console.log("🔄 初期実行を試みます");
+setTimeout(() => {
+  console.log("⏱️ 遅延実行開始");
+  insertModalAndButton();
+}, 1000);
 
 // ✅ 5. DOMが揃ったら自動挿入（MutationObserver）
 const observer = new MutationObserver(() => {
