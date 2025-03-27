@@ -6,11 +6,14 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <h1>プロンプト選択</h1>
-    <div id="prompt-list">
-      <!-- プロンプトリストがここに表示されます -->
-    </div>
+  <h1>Prompt Buttons</h1>
+  <div id="promptContainer"></div>
+  <hr />
+  <div>
+    <h3>現在のプロンプト</h3>
+    <p><strong>Positive:</strong> <span id="positiveOutput"></span></p>
+    <p><strong>Negative:</strong> <span id="negativeOutput"></span></p>
+    <button id="insertButton">SeaArt に挿入</button>
   </div>
   <script src="popup.js"></script>
 </body>

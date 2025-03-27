@@ -1,41 +1,11 @@
-body {
-  width: 400px;
-  padding: 20px;
-  font-family: sans-serif;
-}
-
-.container {
-  max-width: 100%;
-}
-
-h1 {
-  font-size: 1.5em;
-  margin-bottom: 20px;
-}
-
-h2 {
-  font-size: 1.2em;
-  margin-bottom: 15px;
-}
-
-.upload-section {
-  margin-bottom: 20px;
-}
-
-button {
-  padding: 8px 16px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
+.prompt-button {
+  margin: 4px;
+  padding: 6px 10px;
+  border: 1px solid #aaa;
   border-radius: 4px;
   cursor: pointer;
 }
-
-button:hover {
-  background-color: #45a049;
+.prompt-button.selected {
+  background-color: #007bff;
+  color: white;
 }
-
-#prompt-list {
-  max-height: 400px;
-  overflow-y: auto;
-} 
