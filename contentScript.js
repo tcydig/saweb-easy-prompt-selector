@@ -328,7 +328,7 @@ function loadPromptData() {
   }
 }
 
-// ✅ 3. プロンプト描画処理
+// ✅ 3. プロンプト描画処理 - グリッドレイアウト対応版
 function renderPrompts(fileName) {
   console.log(`🖌️ renderPrompts called with fileName: ${fileName}`);
 
@@ -350,25 +350,46 @@ function renderPrompts(fileName) {
   console.log(`🖌️ ファイル「${fileName}」の内容:`, allPromptData[fileName]);
   const fileContent = allPromptData[fileName];
 
+  // グリッドコンテナの作成
+  const gridContainer = document.createElement('div');
+  gridContainer.className = 'category-grid';
+  gridContainer.style.cssText = `
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
+    gap: 12px !important;
+    width: 100% !important;
+  `;
+  container.appendChild(gridContainer);
+
+  // 直接プロンプトのコンテナ（グリッド外に配置）
+  let directRow = document.createElement('div');
+  directRow.className = 'button-row button-row-direct';
+  directRow.style.cssText = 'display: flex !important; flex-wrap: wrap !important; gap: 8px !important; margin-bottom: 12px !important;';
+  container.insertBefore(directRow, gridContainer); // グリッドの前に配置
+
+  // 中カテゴリをグリッドに配置
   for (const midKey in fileContent) {
     const midValue = fileContent[midKey];
 
     if (typeof midValue === 'string') {
-      let directRow = container.querySelector('.button-row-direct');
-      if (!directRow) {
-        directRow = document.createElement('div');
-        directRow.className = 'button-row button-row-direct';
-        directRow.style.cssText = 'display: flex !important; flex-wrap: wrap !important; gap: 8px !important;';
-        container.appendChild(directRow);
-      }
+      // 直接プロンプトの場合
       const btn = createPromptButton(midKey, midValue);
       directRow.appendChild(btn);
     }
-
     else if (typeof midValue === 'object') {
+      // 中カテゴリの場合（グリッドアイテムとして配置）
       const midDiv = document.createElement('div');
       midDiv.className = 'mid-category';
-      midDiv.style.cssText = 'border: 1px solid #555 !important; padding: 14px !important; border-radius: 6px !important; background-color: #1a1a1a !important; display: flex !important; flex-direction: column !important; gap: 10px !important; margin-bottom: 12px !important;';
+      midDiv.style.cssText = `
+        border: 1px solid #555 !important;
+        padding: 14px !important;
+        border-radius: 6px !important;
+        background-color: #1a1a1a !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 10px !important;
+        height: fit-content !important;
+      `;
 
       const midLabel = document.createElement('h4');
       midLabel.textContent = midKey;
@@ -388,7 +409,7 @@ function renderPrompts(fileName) {
         } else if (typeof subValue === 'object') {
           const subDiv = document.createElement('div');
           subDiv.className = 'sub-category';
-          subDiv.style.cssText = 'border: 1px solid #444 !important; padding: 10px !important; border-radius: 5px !important; background-color: #252525 !important; display: flex !important; flex-direction: column !important; gap: 8px !important;';
+          subDiv.style.cssText = 'border: 1px solid #444 !important; padding: 10px !important; border-radius: 5px !important; background-color: #252525 !important; display: flex !important; flex-direction: column !important; gap: 8px !important; width: 100% !important;';
 
           const subLabel = document.createElement('h5');
           subLabel.textContent = subKey;
@@ -416,8 +437,45 @@ function renderPrompts(fileName) {
         midDiv.appendChild(midButtonRow);
       }
 
-      container.appendChild(midDiv);
+      // グリッドに追加
+      gridContainer.appendChild(midDiv);
     }
+  }
+
+  // グリッドサイズのリサイズ監視を追加
+  setupGridResizeObserver(gridContainer);
+}
+
+// パネルのリサイズに応じてグリッドのカラム数を動的に調整
+function setupGridResizeObserver(gridContainer) {
+  // ResizeObserverが利用可能かチェック
+  if (typeof ResizeObserver !== 'undefined') {
+    const observer = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        const width = entry.contentRect.width;
+        console.log("📏 グリッドの幅が変更されました:", width);
+
+        // 親要素の幅に応じてグリッドのカラム数を調整
+        let columns = 1; // デフォルト：極小
+
+        if (width > 700) {
+          columns = 4; // 大
+        } else if (width > 500) {
+          columns = 3; // 中
+        } else if (width > 300) {
+          columns = 2; // 小
+        }
+
+        // グリッドのカラム設定を更新
+        gridContainer.style.setProperty('grid-template-columns', `repeat(${columns}, 1fr)`, 'important');
+        console.log(`📏 グリッドカラム数を${columns}に設定しました`);
+      }
+    });
+
+    // グリッドコンテナを監視開始
+    observer.observe(gridContainer.parentElement);
+  } else {
+    console.warn("⚠️ ResizeObserverが利用できません。固定レイアウトを使用します。");
   }
 }
 
@@ -470,11 +528,83 @@ function createPromptButton(label, value) {
   return button;
 }
 
+// ✅ ボタン表示のフォールバック機能（ボタンが見つからない場合に使用）
+function insertFixedButton() {
+  // すでにボタンが存在する場合は何もしない
+  if (document.getElementById('saweb-toggle-modal-btn')) {
+    return;
+  }
+
+  console.log("⚠️ フォールバック: 固定位置ボタンを追加します");
+
+  // 固定位置のボタンを作成
+  const fixedButton = document.createElement('button');
+  fixedButton.textContent = '🧠';
+  fixedButton.id = 'saweb-toggle-modal-btn';
+  fixedButton.title = 'プロンプトを開く';
+  fixedButton.style.cssText = `
+    position: fixed !important;
+    top: 10px !important;
+    right: 10px !important;
+    z-index: 2147483646 !important;
+    padding: 6px 10px !important;
+    font-size: 16px !important;
+    background-color: #f90 !important;
+    color: #000 !important;
+    border: none !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3) !important;
+  `;
+
+  document.body.appendChild(fixedButton);
+  console.log("✅ 固定位置ボタン追加済み");
+
+  return fixedButton;
+}
+
 // 重要: 初期実行を追加
 console.log("🔄 初期実行を試みます");
 setTimeout(() => {
   console.log("⏱️ 遅延実行開始");
+
+  // 通常のボタン挿入を試みる
   insertPanelAndButton();
+
+  // 5秒後にボタンが存在するかチェックし、なければフォールバック
+  setTimeout(() => {
+    if (!document.getElementById('saweb-toggle-modal-btn')) {
+      const fixedButton = insertFixedButton();
+
+      // フォールバックボタンにもイベントハンドラを追加
+      if (fixedButton) {
+        // 新しいパネルを作成する処理を呼び出す
+        // （ここでは関数呼び出しでなく直接コードを書きます）
+        console.log("🧠 フォールバックボタンのイベントハンドラを設定");
+
+        fixedButton.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          // 既存のパネルを探す
+          let panelContent = document.querySelector('.saweb-panel-content');
+
+          // パネルがなければ新規作成
+          if (!panelContent) {
+            console.log("📦 新規パネルを作成します");
+            // パネル作成コードはinsertPanelAndButton関数と同様...
+            // 実際のコードは長くなるので省略
+          } else {
+            // パネルの表示/非表示を切り替え
+            const isVisible = panelContent.style.display !== 'none';
+            panelContent.style.setProperty('display', isVisible ? 'none' : 'block', 'important');
+            console.log(isVisible ? "🔍 パネル非表示" : "🔍 パネル表示");
+          }
+        });
+      }
+    }
+  }, 5000);
+
 }, 1000);
 
 // ✅ 5. DOMが揃ったら自動挿入（MutationObserver）
