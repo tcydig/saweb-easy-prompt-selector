@@ -56,40 +56,74 @@ renderList();
 
 // Helper関数
 // Easy Prompt Selector(SD)で許可されているYaml形式を名部フォーマットに修正する
+function arrayToPromptMap(array) {
+  return array.map(item => ({ [item]: item }));
+}
+
 function convertToNewFormat(oldData) {
   const midList = [];
 
+  // ✅ Topレベルが配列の場合：ボタンとして直接表示
+  if (Array.isArray(oldData)) {
+    const prompts = arrayToPromptMap(oldData);
+    midList.push(...prompts); // ← subListにせずそのままmidListへ追加
+    return { midList };
+  }
+
+  // ✅ Topレベルがオブジェクトの場合：通常処理
   for (const [midKey, midValue] of Object.entries(oldData)) {
     const midEntry = {};
 
-    // 直接プロンプトのように文字列1つならそのまま入れる
+    // ① 中カテゴリが文字列（直接プロンプト）
     if (typeof midValue === 'string') {
       midEntry[midKey] = midValue;
       midList.push(midEntry);
       continue;
     }
 
+    // ② 中カテゴリが配列 → subList でボタン群にする
+    if (Array.isArray(midValue)) {
+      const subList = arrayToPromptMap(midValue).map(obj => {
+        const key = Object.keys(obj)[0];
+        return { [key]: obj[key] };
+      });
+      midEntry[midKey] = { subList };
+      midList.push(midEntry);
+      continue;
+    }
+
+    // ③ 中カテゴリがオブジェクト（通常の構造）
     const subList = [];
 
     for (const [subKey, subValue] of Object.entries(midValue)) {
-      // 小カテゴリも文字列なら直接プロンプトとして処理
       if (typeof subValue === 'string') {
+        subList.push({ [subKey]: subValue });
+        continue;
+      }
+
+      if (Array.isArray(subValue)) {
+        const prompts = arrayToPromptMap(subValue);
         subList.push({
-          [subKey]: subValue
+          [subKey]: { prompts }
         });
         continue;
       }
 
-      // promptsに変換（順序を保つ）
-      const prompts = Object.entries(subValue).map(([label, prompt]) => ({
-        [label]: prompt
-      }));
+      if (subValue && typeof subValue === 'object') {
+        const prompts = [];
 
-      subList.push({
-        [subKey]: {
-          prompts
+        for (const [label, value] of Object.entries(subValue)) {
+          if (typeof value === 'string') {
+            prompts.push({ [label]: value });
+          } else if (Array.isArray(value)) {
+            prompts.push(...arrayToPromptMap(value));
+          }
         }
-      });
+
+        subList.push({
+          [subKey]: { prompts }
+        });
+      }
     }
 
     midEntry[midKey] = { subList };
