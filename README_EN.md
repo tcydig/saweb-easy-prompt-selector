@@ -91,6 +91,14 @@ Scenery Prompts:
 Example YAMLs can be found in the `test` folder.  
 Feel free to refer to them when creating your own.
 
+### synchronous
+
+Uploading Yaml is not enough to synchronise with Seaart. \
+After uploading, press the Sync button to synchronise. \
+You can also synchronise by reloading the Seaart webpage
+
+![Image](/media/sy_5.png)
+
 ---
 
 ## ⑥ Notes
