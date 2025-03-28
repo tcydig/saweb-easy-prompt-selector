@@ -285,17 +285,68 @@ function loadPromptData() {
         // テスト用の初期データ（サンプル）
         const sampleData = {
           "サンプルファイル.yaml": {
-            "基本カテゴリ": {
-              "風景": {
-                "森": "beautiful forest, trees, nature",
-                "海": "beautiful ocean, waves, beach"
+            "midList":[
+              {
+                "基本カテゴリ": {
+                  "subList":[
+                    {
+                      "風景": {
+                        prompts:[
+                          {
+                            "森": "beautiful forest, trees, nature",
+                          },
+                          {
+                            "海": "beautiful ocean, waves, beach"
+                          }
+                        ]
+                      },
+                    },
+                    {
+                      "スタイル": {
+                        prompts:[
+                          {
+                            "写実的": "photorealistic, detailed",
+                          },
+                          {
+                            "漫画風": "cartoon style, anime"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
               },
-              "スタイル": {
-                "写実的": "photorealistic, detailed",
-                "漫画風": "cartoon style, anime"
+              {
+                "サンプルカテゴリ": {
+                  "subList":[
+                    {
+                      "風景": {
+                        prompts:[
+                          {
+                            "森": "beautiful forest, trees, nature",
+                          },
+                          {
+                        "海": "beautiful ocean, waves, beach"
+                          }
+                        ]
+                      },
+                    },
+                    {
+                      "スタイル": {
+                        prompts:[
+                          {
+                            "写実的": "photorealistic, detailed",
+                          },
+                          {
+                            "漫画風": "cartoon style, anime"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
               }
-            },
-            "直接プロンプト": "basic prompt example"
+            ],
           }
         };
 
@@ -310,7 +361,7 @@ function loadPromptData() {
       }
 
       // データ処理を継続
-      allPromptData = data;
+      allPromptData = convertToLegacyFormat(data);
 
       const selector = document.getElementById('fileSelector');
       if (!selector) {
@@ -351,6 +402,59 @@ function loadPromptData() {
   }
 }
 
+// Helper関数
+// 新フォーマット(順序保障)⇒旧フォーマット(順序保障)に変換する
+function convertToLegacyFormat(data) {
+  const converted = {};
+
+  for (const [fileName, fileContent] of Object.entries(data)) {
+    const legacyContent = {};
+
+    // 新形式かどうかチェック
+    if (Array.isArray(fileContent.midList)) {
+      for (const midEntry of fileContent.midList) {
+        const midKey = Object.keys(midEntry)[0];
+        const midValue = midEntry[midKey];
+      
+        if (typeof midValue === 'string') {
+          legacyContent[midKey] = midValue;
+          continue;
+        }
+      
+        const subMap = {};
+      
+        if (Array.isArray(midValue?.subList)) {
+          for (const subEntry of midValue.subList) {
+            const subKey = Object.keys(subEntry)[0];
+            const subValue = subEntry[subKey];
+      
+            if (typeof subValue === 'string') {
+              subMap[subKey] = subValue; // ← ここは OK
+            } else if (Array.isArray(subValue?.prompts)) {
+              const promptMap = {};
+              for (const promptItem of subValue.prompts) {
+                const label = Object.keys(promptItem)[0];
+                promptMap[label] = promptItem[label];
+              }
+              subMap[subKey] = promptMap;
+            }
+          }
+      
+          // 🔥 ここで中カテゴリとして subMap をまとめて追加
+          legacyContent[midKey] = subMap;
+        }
+      }
+    } else {
+      // 旧形式のままの場合はそのまま
+      Object.assign(legacyContent, fileContent);
+    }
+
+    converted[fileName] = legacyContent;
+  }
+
+  return converted;
+}
+
 // ✅ 3. プロンプト描画処理 - グリッドレイアウト対応版
 function renderPrompts(fileName) {
   console.log(`🖌️ renderPrompts called with fileName: ${fileName}`);
@@ -388,7 +492,8 @@ function renderPrompts(fileName) {
   directRow.style.cssText = 'display: flex !important; flex-wrap: wrap !important; gap: 8px !important; margin-bottom: 12px !important;';
   container.insertBefore(directRow, gridContainer);
 
-  for (const midKey in fileContent) {
+  const keys = Object.keys(fileContent);
+  for (const midKey of keys) {
     const midValue = fileContent[midKey];
 
     if (typeof midValue === 'string') {
